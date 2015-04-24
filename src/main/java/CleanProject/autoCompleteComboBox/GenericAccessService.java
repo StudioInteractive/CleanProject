@@ -7,5 +7,7 @@ import java.util.List;
  */
 public interface GenericAccessService<T> {
 
-    List<T> searchInDataBase(String filterPrefix);
+    List<T> searchInDataBase(String filterPrefix, long firstResult);
+
+    long countInDataBase(String filterPrefix);
 }

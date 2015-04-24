@@ -14,11 +14,16 @@ import com.vaadin.server.VaadinServlet;
 import com.vaadin.shared.ui.combobox.FilteringMode;
 import com.vaadin.ui.*;
 import com.vaadin.ui.Button.ClickEvent;
+import org.vaadin.viritin.fields.CaptionGenerator;
+import org.vaadin.viritin.fields.LazyComboBox;
+import org.vaadin.viritin.fields.MValueChangeEvent;
+import org.vaadin.viritin.fields.MValueChangeListener;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.servlet.annotation.WebServlet;
+import java.util.List;
 
 /**
  *
@@ -33,7 +38,7 @@ public class MyUI extends UI {
     private static EntityManager em;
     private SuggestingComboBox assetsComboBox;
     private SuggestingComboBox  assetsStorageComboBox;
-
+    private LazyComboBox<Asset> assetsLazyBox;
     @Override
     protected void init(VaadinRequest vaadinRequest) {
         factory = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT);
@@ -85,11 +90,44 @@ public class MyUI extends UI {
                     layout.addComponent(new Label(((Asset) assetsComboBox.getValue()).getName()));
                 if (assetsStorageComboBox.getValue() != null)
                     layout.addComponent(new Label(((AssetStorage) assetsStorageComboBox.getValue()).getName()));
+                if (assetsLazyBox.getValue() != null)
+                    layout.addComponent(new Label(((Asset) assetsLazyBox.getValue()).getName()));
             }
         });
 
 
+        assetsLazyBox = new LazyComboBox<>(Asset.class,
+                new LazyComboBox.FilterablePagingProvider<Asset>() {
 
+                    @Override
+                    public List<Asset> findEntities(int firstRow, String filter) {
+                        return assetDatabaseAccessService.searchInDataBase(
+                                filter, firstRow);
+                    }
+                }, new LazyComboBox.FilterableCountProvider() {
+
+            @Override
+            public int size(String filter) {
+                return (int) assetDatabaseAccessService.countInDataBase(
+                        filter);
+            }
+        },
+                30);
+        assetsLazyBox.setCaptionGenerator(new CaptionGenerator<Asset>() {
+
+            @Override
+            public String getCaption(Asset option) {
+                return option.getName();
+            }
+        });
+
+        assetsLazyBox.addMValueChangeListener(new MValueChangeListener<Asset>() {
+
+            @Override
+            public void valueChange(MValueChangeEvent<Asset> event) {
+                Notification.show(event.getValue().toString());
+            }
+        });
 
 
 
@@ -99,6 +137,7 @@ public class MyUI extends UI {
         horizontalLayout.addComponent(button);
         horizontalLayout.addComponent(assetsComboBox);
         horizontalLayout.addComponent(assetsStorageComboBox);
+        horizontalLayout.addComponent(assetsLazyBox);
         layout.addComponent(horizontalLayout);
 
 

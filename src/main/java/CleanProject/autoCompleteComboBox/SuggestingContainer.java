@@ -72,7 +72,7 @@ public class SuggestingContainer<T> extends BeanItemContainer {
         }
 
         removeAllItems();
-        List items = service.searchInDataBase(filterString);
+        List items = service.searchInDataBase(filterString, 0);
         addAll(items);
     }
 
